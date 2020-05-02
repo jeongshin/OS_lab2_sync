@@ -42,6 +42,7 @@ typedef struct lab2_node
  */
 typedef struct lab2_tree
 {
+    pthread_mutex_t mutex;
     struct lab2_node *root;
 } lab2_tree;
 
@@ -60,6 +61,29 @@ typedef struct thread_arg
     int end;
 } thread_arg;
 
+typedef qnode *qnptr;
+typedef lab2_node *tnptr;
+
+typedef struct qnode
+{
+    tnptr tnode;
+    struct qnode *next;
+} qnode;
+
+typedef struct queue
+{
+    pthread_mutex_t mutx;
+    qnptr front;
+    qnptr rear;
+    tnptr tnode;
+    int count;
+} queue;
+
+queue *create_queue();
+tnptr pop(queue *queue);
+void push(queue *queue, tnptr tnode);
+void destroy_queue(queue *queue);
+
 /* 
  * lab2_bst.c related functions 
  * TODO
@@ -75,32 +99,5 @@ int lab2_node_remove(lab2_tree *tree, int key);
 int lab2_node_remove_fg(lab2_tree *tree, int key);
 int lab2_node_remove_cg(lab2_tree *tree, int key);
 void lab2_tree_delete(lab2_tree *tree);
-void lab2_node_delete(lab2_node *node);
-
-
-
-// /*
-//  * Lab2 bonus(lab2_bonus.c)
-//  *  Spin Lock implementation in assembly level.
-//  *
-//  * lab2_bonus.c related functions
-//  */
-
-// /* assembly implementation example functions */
-// void atomic_add(int *value, int inc_val);
-// void atomic_sub(int *value, int dec_val);
-// void atomic_inc(int *value);
-// void atomic_dec(int *value);
-
-// /*
-//  * lab2_bonus.c related functions
-//  * TODO
-//  *  You need to implement these function.
-//  */
-// void lab2_spin_lock(int volatile *lock);
-// void lab2_spin_unlock(int volatile *lock);
-
-// /* lab2_timeval.c related function */
-// double get_timeval(struct timeval *tv, struct timeval *tv_end);
 
 #endif /* LAB2_HEADER_H*/
