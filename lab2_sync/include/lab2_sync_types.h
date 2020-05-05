@@ -61,34 +61,13 @@ typedef struct thread_arg
     int end;
 } thread_arg;
 
-typedef qnode *qnptr;
-typedef lab2_node *tnptr;
-
-typedef struct qnode
-{
-    tnptr tnode;
-    struct qnode *next;
-} qnode;
-
-typedef struct queue
-{
-    pthread_mutex_t mutx;
-    qnptr front;
-    qnptr rear;
-    tnptr tnode;
-    int count;
-} queue;
-
-queue *create_queue();
-tnptr pop(queue *queue);
-void push(queue *queue, tnptr tnode);
-void destroy_queue(queue *queue);
-
 /* 
  * lab2_bst.c related functions 
  * TODO
  *  You need to implement these functions. 
  */
+
+void traversal_node_inorder(lab2_node *node);
 int lab2_node_print_inorder(lab2_tree *tree);
 lab2_tree *lab2_tree_create();
 lab2_node *lab2_node_create(int key);
@@ -98,6 +77,8 @@ int lab2_node_insert_cg(lab2_tree *tree, lab2_node *new_node);
 int lab2_node_remove(lab2_tree *tree, int key);
 int lab2_node_remove_fg(lab2_tree *tree, int key);
 int lab2_node_remove_cg(lab2_tree *tree, int key);
+void _lab2_tree_delete(lab2_node *node);
 void lab2_tree_delete(lab2_tree *tree);
+double get_timeval(struct timeval *tv, struct timeval *tv_end);
 
 #endif /* LAB2_HEADER_H*/

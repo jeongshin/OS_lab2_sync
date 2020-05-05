@@ -19,58 +19,6 @@
 
 #include "lab2_sync_types.h"
 
-queue *create_queue()
-{
-    queue *new_queue = (queue *)malloc(sizeof(queue));
-    new_queue->count = 0;
-    new_queue->front = NULL;
-    new_queue->rear = NULL;
-    return new_queue;
-}
-
-tnptr pop(queue *queue)
-{
-    if (queue->count == 0)
-        return;
-    else
-    {
-        qnptr temp = queue->front;
-        queue->front = temp->next;
-        tnptr node = &temp->tnode;
-        free(temp);
-        queue->count--;
-        return node;
-    }
-}
-
-void push(queue *queue, tnptr tnode)
-{
-    qnptr qnode = (qnptr)malloc(sizeof(qnptr));
-    qnode->tnode = tnode;
-    qnode->next = NULL;
-    if (qnode->count == 0)
-    {
-        queue->front = qnode;
-        queue->rear = qnode;
-    }
-    else
-    {
-        queue->rear->next = qnode;
-        queue->rear = qnode;
-    }
-    queue->count++;
-    return;
-}
-
-void destroy_queue(queue *queue)
-{
-    while (queue->count != 0)
-    {
-        pop(queue);
-    }
-    free(queue);
-    return;
-}
 /*
  * TODO
  *  Implement funtction which traverse BST in in-order
@@ -78,7 +26,6 @@ void destroy_queue(queue *queue)
  *  @param lab2_tree *tree  : bst to print in-order. 
  *  @return                 : status (success or fail)
  */
-
 void traversal_node_inorder(lab2_node *node)
 {
     if (node == NULL)
@@ -90,6 +37,11 @@ void traversal_node_inorder(lab2_node *node)
 
 int lab2_node_print_inorder(lab2_tree *tree)
 {
+    if (tree == NULL)
+    {
+        perror("Error: Empty tree node traversal!");
+        exit(-1);
+    }
     lab2_node *node = tree->root;
     traversal_node_inorder(node);
     return 0;
@@ -106,11 +58,7 @@ lab2_tree *lab2_tree_create()
 {
     lab2_tree *tree;
     tree = malloc(sizeof(lab2_tree));
-    if (tree == NULL)
-    {
-        perror("Error: tree malloc error occurred!");
-        return -1;
-    }
+    assert(tree != NULL);
     tree->root = NULL;
     return tree;
 }
@@ -126,11 +74,7 @@ lab2_tree *lab2_tree_create()
 lab2_node *lab2_node_create(int key)
 {
     struct lab2_node *node = malloc(sizeof(struct lab2_node));
-    if (node == NULL)
-    {
-        perror("Error: node malloc error occurred!");
-        return -1;
-    }
+    assert(node != NULL);
     node->key = key;
     node->left = NULL;
     node->right = NULL;
@@ -147,6 +91,11 @@ lab2_node *lab2_node_create(int key)
  */
 int lab2_node_insert(lab2_tree *tree, lab2_node *new_node)
 {
+    if (tree == NULL)
+    {
+        perror("Error: Empty tree insertion!");
+        exit(-1);
+    }
     lab2_node *curr = tree->root;
     lab2_node *parent = NULL;
     int key = new_node->key;
@@ -161,18 +110,18 @@ int lab2_node_insert(lab2_tree *tree, lab2_node *new_node)
     {
         parent = curr;
         if (key < curr->key)
-            curr = curr->left;
+            curr = (lab2_node *)curr->left;
         else
-            curr = curr->right;
+            curr = (lab2_node *)curr->right;
     }
 
     if (key < parent->key)
     {
-        parent->left = new_node;
+        parent->left = (struct lab2_tree *)new_node;
     }
     else
     {
-        parent->right = new_node;
+        parent->right = (struct lab2_tree *)new_node;
     }
     return 1;
 }
@@ -271,19 +220,67 @@ int lab2_node_insert_cg(lab2_tree *tree, lab2_node *new_node)
  *  @param int key          : key value that you want to delete. 
  *  @return                 : status (success or fail)
  */
+
 int lab2_node_remove(lab2_tree *tree, int key)
 {
-    lab2_node *root = tree->root;
-    if (root == NULL)
+    if (tree == NULL)
     {
-        perror("Error: empty tree node removal!");
-        return 0;
+        perror("Error: Empty tree node deletion!");
+        exit(-1);
     }
-    if (root->left == NULL && root->right == NULL)
+    lab2_node *parent = NULL;
+    lab2_node *curr = tree->root;
+    /*Searching for node to delete*/
+    while (curr != NULL && curr->key != key)
     {
-        if (root->key == key)
-            return 0;
+        parent = curr;
+        if (key < curr->key)
+            curr = (lab2_node *)curr->left;
+        else
+            curr = (lab2_node *)curr->right;
     }
+    /*Node with no child (leaf node)*/
+    if (curr->left == NULL && curr->right == NULL)
+    {
+        if (parent->left == curr)
+            parent->left = NULL;
+        else
+            parent->right = NULL;
+        free(curr);
+    }
+    /*Node with left child only*/
+    else if (curr->left != NULL && curr->right == NULL)
+    {
+        if (parent->left == curr)
+            parent->left = curr->left;
+        else
+            parent->right = curr->left;
+        free(curr);
+    }
+    /*Node with right child only*/
+    else if (curr->left == NULL && curr->right != NULL)
+    {
+        if (parent->left == curr)
+            parent->left = curr->right;
+        else
+            parent->right = curr->right;
+        free(curr);
+    }
+    /*Node with right & left child*/
+    else
+    {
+        lab2_node *succ = (lab2_node *)curr->right;
+        while (succ->left != NULL)
+            succ = (lab2_node *)succ->left;
+        parent = curr;
+        curr->key = succ->key;
+        if (parent->left == succ)
+            parent->left = NULL;
+        else
+            parent->right = NULL;
+        free(succ);
+    }
+    return 1;
 }
 
 /* 
@@ -296,7 +293,74 @@ int lab2_node_remove(lab2_tree *tree, int key)
  */
 int lab2_node_remove_fg(lab2_tree *tree, int key)
 {
-    // You need to implement lab2_node_remove_fg function.
+    if (tree == NULL)
+    {
+        perror("Error: Empty tree node deletion!");
+        exit(-1);
+    }
+    lab2_node *parent = NULL;
+    lab2_node *curr = tree->root;
+    /*Searching for node to delete*/
+    while (curr != NULL && curr->key != key)
+    {
+        parent = curr;
+        pthread_mutex_lock(&parent->mutex);
+        if (key < curr->key)
+            curr = (lab2_node *)curr->left;
+        else
+            curr = (lab2_node *)curr->right;
+        pthread_mutex_unlock(&parent->mutex);
+    }
+    /*Node with no child (leaf node)*/
+    if (curr->left == NULL && curr->right == NULL)
+    {
+        pthread_mutex_lock(&tree->mutex);
+        if (parent->left == curr)
+            parent->left = NULL;
+        else
+            parent->right = NULL;
+        pthread_mutex_unlock(&tree->mutex);
+        free(curr);
+    }
+    /*Node with left child only*/
+    else if (curr->left != NULL && curr->right == NULL)
+    {
+        pthread_mutex_lock(&tree->mutex);
+        if (parent->left == curr)
+            parent->left = curr->left;
+        else
+            parent->right = curr->left;
+        pthread_mutex_unlock(&tree->mutex);
+        free(curr);
+    }
+    /*Node with right child only*/
+    else if (curr->left == NULL && curr->right != NULL)
+    {
+        pthread_mutex_lock(&tree->mutex);
+        if (parent->left == curr)
+            parent->left = curr->right;
+        else
+            parent->right = curr->right;
+        pthread_mutex_unlock(&tree->mutex);
+        free(curr);
+    }
+    /*Node with right & left child*/
+    else
+    {
+        lab2_node *succ = (lab2_node *)curr->right;
+        pthread_mutex_lock(&tree->mutex);
+        while (succ->left != NULL)
+            succ = (lab2_node *)succ->left;
+        parent = curr;
+        curr->key = succ->key;
+        if (parent->left == succ)
+            parent->left = NULL;
+        else
+            parent->right = NULL;
+        pthread_mutex_unlock(&tree->mutex);
+        free(succ);
+    }
+    return 1;
 }
 
 /* 
@@ -309,6 +373,66 @@ int lab2_node_remove_fg(lab2_tree *tree, int key)
  */
 int lab2_node_remove_cg(lab2_tree *tree, int key)
 {
+    if (tree == NULL)
+    {
+        perror("Error: Empty tree node deletion!");
+        exit(-1);
+    }
+    pthread_mutex_lock(&tree->mutex);
+    lab2_node *parent = NULL;
+    lab2_node *curr = tree->root;
+    /*Searching for node to delete*/
+    while (curr != NULL && curr->key != key)
+    {
+        parent = curr;
+        if (key < curr->key)
+            curr = (lab2_node *)curr->left;
+        else
+            curr = (lab2_node *)curr->right;
+    }
+    /*Node with no child (leaf node)*/
+    if (curr->left == NULL && curr->right == NULL)
+    {
+        if (parent->left == curr)
+            parent->left = NULL;
+        else
+            parent->right = NULL;
+        free(curr);
+    }
+    /*Node with left child only*/
+    else if (curr->left != NULL && curr->right == NULL)
+    {
+        if (parent->left == curr)
+            parent->left = curr->left;
+        else
+            parent->right = curr->left;
+        free(curr);
+    }
+    /*Node with right child only*/
+    else if (curr->left == NULL && curr->right != NULL)
+    {
+        if (parent->left == curr)
+            parent->left = curr->right;
+        else
+            parent->right = curr->right;
+        free(curr);
+    }
+    /*Node with right & left child*/
+    else
+    {
+        lab2_node *succ = (lab2_node *)curr->right;
+        while (succ->left != NULL)
+            succ = (lab2_node *)succ->left;
+        parent = curr;
+        curr->key = succ->key;
+        if (parent->left == succ)
+            parent->left = NULL;
+        else
+            parent->right = NULL;
+        free(succ);
+    }
+    pthread_mutex_unlock(&tree->mutex);
+    return 1;
 }
 
 /*
@@ -319,25 +443,24 @@ int lab2_node_remove_cg(lab2_tree *tree, int key)
  *  @param lab2_tree *tree  : bst which you want to delete. 
  *  @return                 : status(success or fail)
  */
+void _lab2_tree_delete(lab2_node *node)
+{
+    if (node == NULL)
+        return;
+    _lab2_tree_delete((lab2_node *)node->left);
+    _lab2_tree_delete((lab2_node *)node->right);
+    //    printf("\n delete node %d", node->key);
+    free(node);
+}
+
 void lab2_tree_delete(lab2_tree *tree)
 {
-    queue *queue = create_queue();
-    lab2_node *root = tree->root;
-    lab2_node *curr = NULL;
-    if (root == NULL)
+    if (tree == NULL)
     {
-        perror("Warning: delete empty tree");
-        return;
+        perror("Error : empty tree deletion");
+        exit(-1);
     }
-    push(queue, root);
-    while (queue->count > 0)
-    {
-        curr = pop(queue);
-        if (curr->left)
-            push(queue, curr->left);
-        if (curr->right)
-            push(queue, curr->right);
-        free(curr);
-    }
-    root = NULL;
+    _lab2_tree_delete(tree->root);
+    tree->root = NULL;
+    free(tree);
 }

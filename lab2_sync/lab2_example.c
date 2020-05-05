@@ -120,7 +120,6 @@ int mutex_test(int num_threads, int num_iterations, int is_sync)
         /* wait until working threads complete their job  */
         pthread_join(pthreads[i], NULL);
     }
-
     print_result(num_threads, num_iterations, is_sync);
 
     return LAB2_SUCCESS;
