@@ -316,54 +316,45 @@ int lab2_node_remove_fg(lab2_tree *tree, int key)
     while (curr != NULL && curr->key != key)
     {
         parent = curr;
-        pthread_mutex_lock(&curr->mutex);
         if (key < curr->key)
             curr = (lab2_node *)curr->left;
         else
             curr = (lab2_node *)curr->right;
-        pthread_mutex_unlock(&curr->mutex);
     }
     /*Node with no child (leaf node)*/
     if (curr->left == NULL && curr->right == NULL)
     {
-        pthread_mutex_lock(&parent->mutex);
         if (parent->left == curr)
             parent->left = NULL;
         else
             parent->right = NULL;
-        pthread_mutex_unlock(&parent->mutex);
         _ncount--;
         free(curr);
     }
     /*Node with left child only*/
     else if (curr->left != NULL && curr->right == NULL)
     {
-        pthread_mutex_lock(&parent->mutex);
         if (parent->left == curr)
             parent->left = curr->left;
         else
             parent->right = curr->left;
         _ncount--;
-        pthread_mutex_unlock(&parent->mutex);
         free(curr);
     }
     /*Node with right child only*/
     else if (curr->left == NULL && curr->right != NULL)
     {
-        pthread_mutex_lock(&parent->mutex);
         if (parent->left == curr)
             parent->left = curr->right;
         else
             parent->right = curr->right;
         _ncount--;
-        pthread_mutex_unlock(&parent->mutex);
         free(curr);
     }
     /*Node with right & left child*/
     else
     {
         lab2_node *succ = (lab2_node *)curr->right;
-        pthread_mutex_lock(&parent->mutex);
         while (succ->left != NULL)
             succ = (lab2_node *)succ->left;
         parent = curr;
@@ -373,10 +364,81 @@ int lab2_node_remove_fg(lab2_tree *tree, int key)
         else
             parent->right = NULL;
         _ncount--;
-        pthread_mutex_unlock(&parent->mutex);
         free(succ);
     }
     return 1;
+    // if (tree == NULL)
+    // {
+    //     perror("Error: Empty tree node deletion!");
+    //     exit(-1);
+    // }
+    // lab2_node *parent = NULL;
+    // lab2_node *curr = tree->root;
+    // /*Searching for node to delete*/
+    // while (curr != NULL && curr->key != key)
+    // {
+    //     parent = curr;
+    //     pthread_mutex_lock(&curr->mutex);
+    //     if (key < curr->key)
+    //         curr = (lab2_node *)curr->left;
+    //     else
+    //         curr = (lab2_node *)curr->right;
+    //     pthread_mutex_unlock(&curr->mutex);
+    // }
+    // /*Node with no child (leaf node)*/
+    // if (curr->left == NULL && curr->right == NULL)
+    // {
+    //     pthread_mutex_lock(&parent->mutex);
+    //     if (parent->left == curr)
+    //         parent->left = NULL;
+    //     else
+    //         parent->right = NULL;
+    //     pthread_mutex_unlock(&parent->mutex);
+    //     _ncount--;
+    //     free(curr);
+    // }
+    // /*Node with left child only*/
+    // else if (curr->left != NULL && curr->right == NULL)
+    // {
+    //     pthread_mutex_lock(&parent->mutex);
+    //     if (parent->left == curr)
+    //         parent->left = curr->left;
+    //     else
+    //         parent->right = curr->left;
+    //     _ncount--;
+    //     pthread_mutex_unlock(&parent->mutex);
+    //     free(curr);
+    // }
+    // /*Node with right child only*/
+    // else if (curr->left == NULL && curr->right != NULL)
+    // {
+    //     pthread_mutex_lock(&parent->mutex);
+    //     if (parent->left == curr)
+    //         parent->left = curr->right;
+    //     else
+    //         parent->right = curr->right;
+    //     _ncount--;
+    //     pthread_mutex_unlock(&parent->mutex);
+    //     free(curr);
+    // }
+    // /*Node with right & left child*/
+    // else
+    // {
+    //     lab2_node *succ = (lab2_node *)curr->right;
+    //     pthread_mutex_lock(&parent->mutex);
+    //     while (succ->left != NULL)
+    //         succ = (lab2_node *)succ->left;
+    //     parent = curr;
+    //     curr->key = succ->key;
+    //     if (parent->left == succ)
+    //         parent->left = NULL;
+    //     else
+    //         parent->right = NULL;
+    //     _ncount--;
+    //     pthread_mutex_unlock(&parent->mutex);
+    //     free(succ);
+    // }
+    // return 1;
 }
 
 /* 
