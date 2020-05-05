@@ -278,13 +278,19 @@ int lab2_node_remove(lab2_tree *tree, int key)
     {
         lab2_node *succ = (lab2_node *)curr->right;
         while (succ->left != NULL)
+        {
+            parent = succ;
             succ = (lab2_node *)succ->left;
-        parent = curr;
-        curr->key = succ->key;
+        }
         if (parent->left == succ)
-            parent->left = NULL;
+        {
+            parent->left = succ->right;
+        }
         else
-            parent->right = NULL;
+        {
+            parent->right = succ->right;
+        }
+        curr->key = succ->key;
         free(succ);
     }
     return 1;
@@ -340,7 +346,6 @@ int lab2_node_remove_fg(lab2_tree *tree, int key)
             parent->left = curr->left;
         else
             parent->right = curr->left;
-
         pthread_mutex_unlock(&parent->mutex);
         free(curr);
     }
@@ -359,18 +364,23 @@ int lab2_node_remove_fg(lab2_tree *tree, int key)
     /*Node with right & left child*/
     else
     {
+        pthread_mutex_lock(&tree->mutex);
         lab2_node *succ = (lab2_node *)curr->right;
-        pthread_mutex_lock(&parent->mutex);
         while (succ->left != NULL)
+        {
+            parent = succ;
             succ = (lab2_node *)succ->left;
-        parent = curr;
-        curr->key = succ->key;
+        }
         if (parent->left == succ)
-            parent->left = NULL;
+        {
+            parent->left = succ->right;
+        }
         else
-            parent->right = NULL;
-
-        pthread_mutex_unlock(&parent->mutex);
+        {
+            parent->right = succ->right;
+        }
+        curr->key = succ->key;
+        pthread_mutex_unlock(&tree->mutex);
         free(succ);
     }
     return 1;
@@ -437,14 +447,19 @@ int lab2_node_remove_cg(lab2_tree *tree, int key)
     {
         lab2_node *succ = (lab2_node *)curr->right;
         while (succ->left != NULL)
+        {
+            parent = succ;
             succ = (lab2_node *)succ->left;
-        parent = curr;
-        curr->key = succ->key;
+        }
         if (parent->left == succ)
-            parent->left = NULL;
+        {
+            parent->left = succ->right;
+        }
         else
-            parent->right = NULL;
-        free(succ);
+        {
+            parent->right = succ->right;
+        }
+        curr->key = succ->key;
     }
     pthread_mutex_unlock(&tree->mutex);
     return 1;
