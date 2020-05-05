@@ -17,6 +17,8 @@
 #include <pthread.h>
 #include <string.h>
 
+int _ncount = 0;
+
 #include "lab2_sync_types.h"
 
 /*
@@ -31,7 +33,6 @@ void traversal_node_inorder(lab2_node *node)
     if (node == NULL)
         return;
     traversal_node_inorder((lab2_node *)node->left);
-    printf("%d", node->key);
     traversal_node_inorder((lab2_node *)node->right);
 }
 
@@ -44,6 +45,7 @@ int lab2_node_print_inorder(lab2_tree *tree)
     }
     lab2_node *node = tree->root;
     traversal_node_inorder(node);
+    printf("Total Node Created: %d", _ncount);
     return 0;
 }
 
@@ -59,6 +61,7 @@ lab2_tree *lab2_tree_create()
     lab2_tree *tree;
     tree = malloc(sizeof(lab2_tree));
     assert(tree != NULL);
+    pthread_mutex_init(&tree->mutex, NULL);
     tree->root = NULL;
     return tree;
 }
@@ -75,6 +78,7 @@ lab2_node *lab2_node_create(int key)
 {
     struct lab2_node *node = malloc(sizeof(struct lab2_node));
     assert(node != NULL);
+    pthread_mutex_init(&node->mutex, NULL);
     node->key = key;
     node->left = NULL;
     node->right = NULL;
@@ -142,6 +146,7 @@ int lab2_node_insert_fg(lab2_tree *tree, lab2_node *new_node)
     {
         pthread_mutex_lock(&tree->mutex);
         curr = new_node;
+        _ncount++;
         pthread_mutex_unlock(&tree->mutex);
         return 1;
     }
@@ -166,6 +171,7 @@ int lab2_node_insert_fg(lab2_tree *tree, lab2_node *new_node)
     {
         parent->right = new_node;
     }
+    _ncount++;
     pthread_mutex_unlock(&tree->mutex);
     return 1;
 }
@@ -187,6 +193,7 @@ int lab2_node_insert_cg(lab2_tree *tree, lab2_node *new_node)
     if (curr == NULL)
     {
         curr = new_node;
+        _ncount++;
         pthread_mutex_unlock(&tree->mutex);
         return 1;
     }
@@ -208,6 +215,7 @@ int lab2_node_insert_cg(lab2_tree *tree, lab2_node *new_node)
     {
         parent->right = new_node;
     }
+    _ncount++;
     pthread_mutex_unlock(&tree->mutex);
     return 1;
 }
@@ -246,6 +254,7 @@ int lab2_node_remove(lab2_tree *tree, int key)
             parent->left = NULL;
         else
             parent->right = NULL;
+        _ncount--;
         free(curr);
     }
     /*Node with left child only*/
@@ -255,6 +264,7 @@ int lab2_node_remove(lab2_tree *tree, int key)
             parent->left = curr->left;
         else
             parent->right = curr->left;
+        _ncount--;
         free(curr);
     }
     /*Node with right child only*/
@@ -264,6 +274,7 @@ int lab2_node_remove(lab2_tree *tree, int key)
             parent->left = curr->right;
         else
             parent->right = curr->right;
+        _ncount--;
         free(curr);
     }
     /*Node with right & left child*/
@@ -278,6 +289,7 @@ int lab2_node_remove(lab2_tree *tree, int key)
             parent->left = NULL;
         else
             parent->right = NULL;
+        _ncount--;
         free(succ);
     }
     return 1;
@@ -320,6 +332,7 @@ int lab2_node_remove_fg(lab2_tree *tree, int key)
         else
             parent->right = NULL;
         pthread_mutex_unlock(&tree->mutex);
+        _ncount--;
         free(curr);
     }
     /*Node with left child only*/
@@ -330,6 +343,7 @@ int lab2_node_remove_fg(lab2_tree *tree, int key)
             parent->left = curr->left;
         else
             parent->right = curr->left;
+        _ncount--;
         pthread_mutex_unlock(&tree->mutex);
         free(curr);
     }
@@ -341,6 +355,7 @@ int lab2_node_remove_fg(lab2_tree *tree, int key)
             parent->left = curr->right;
         else
             parent->right = curr->right;
+        _ncount--;
         pthread_mutex_unlock(&tree->mutex);
         free(curr);
     }
@@ -357,6 +372,7 @@ int lab2_node_remove_fg(lab2_tree *tree, int key)
             parent->left = NULL;
         else
             parent->right = NULL;
+        _ncount--;
         pthread_mutex_unlock(&tree->mutex);
         free(succ);
     }
@@ -381,6 +397,7 @@ int lab2_node_remove_cg(lab2_tree *tree, int key)
     pthread_mutex_lock(&tree->mutex);
     lab2_node *parent = NULL;
     lab2_node *curr = tree->root;
+    _ncount--;
     /*Searching for node to delete*/
     while (curr != NULL && curr->key != key)
     {
@@ -450,6 +467,7 @@ void _lab2_tree_delete(lab2_node *node)
     _lab2_tree_delete((lab2_node *)node->left);
     _lab2_tree_delete((lab2_node *)node->right);
     //    printf("\n delete node %d", node->key);
+
     free(node);
 }
 
