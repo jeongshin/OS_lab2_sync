@@ -43,7 +43,6 @@ int lab2_node_print_inorder(lab2_tree *tree)
     }
     lab2_node *node = tree->root;
     traversal_node_inorder(node);
-    printf("Total Node Created: %d"    return 0;
 }
 
 /*
