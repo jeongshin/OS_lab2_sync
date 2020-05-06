@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "lab2_sync_types.h": "c"
+        "lab2_sync_types.h": "c",
+        "ios": "c"
     }
 }

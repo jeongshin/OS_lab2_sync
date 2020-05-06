@@ -99,13 +99,11 @@ int lab2_node_insert(lab2_tree *tree, lab2_node *new_node)
     lab2_node *curr = tree->root;
     lab2_node *parent = NULL;
     int key = new_node->key;
-
     if (tree->root == NULL)
     {
         tree->root = new_node;
         return 1;
     }
-
     while (curr != NULL)
     {
         parent = curr;
@@ -114,7 +112,6 @@ int lab2_node_insert(lab2_tree *tree, lab2_node *new_node)
         else
             curr = (lab2_node *)curr->right;
     }
-
     if (key < parent->key)
     {
         parent->left = (struct lab2_tree *)new_node;
@@ -222,7 +219,6 @@ int lab2_node_insert_cg(lab2_tree *tree, lab2_node *new_node)
  *  @param int key          : key value that you want to delete. 
  *  @return                 : status (success or fail)
  */
-
 int lab2_node_remove(lab2_tree *tree, int key)
 {
     if (tree == NULL)
@@ -230,8 +226,10 @@ int lab2_node_remove(lab2_tree *tree, int key)
         perror("Error: Empty tree node deletion!");
         exit(-1);
     }
-    lab2_node *parent = NULL;
     lab2_node *curr = tree->root;
+    lab2_node *parent = NULL;
+    lab2_node *succ;
+    lab2_node *par_succ;
     /*Searching for node to delete*/
     while (curr != NULL && curr->key != key)
     {
@@ -246,56 +244,66 @@ int lab2_node_remove(lab2_tree *tree, int key)
     /*Node with no child (leaf node)*/
     if (curr->left == NULL && curr->right == NULL)
     {
-        if (parent->left == curr)
-            parent->left = NULL;
+        if (parent->left != NULL)
+        {
+            if (parent->left == curr)
+                parent->left = NULL;
+            else
+                parent->right = NULL;
+        }
         else
-            parent->right = NULL;
-
-        free(curr);
+            tree->root = NULL;
+        curr = NULL;
     }
     /*Node with left child only*/
     else if (curr->left != NULL && curr->right == NULL)
     {
-        if (parent->left == curr)
-            parent->left = curr->left;
+        if (parent != NULL)
+        {
+            if (parent->left == curr)
+                parent->left = curr->left;
+            else
+                parent->right = curr->left;
+        }
         else
-            parent->right = curr->left;
-
-        free(curr);
+            (tree->root = curr->left);
+        curr = NULL;
     }
     /*Node with right child only*/
     else if (curr->left == NULL && curr->right != NULL)
     {
-        if (parent->left == curr)
-            parent->left = curr->right;
+        if (parent != NULL)
+        {
+            if (parent->left == curr)
+                parent->left = curr->right;
+            else
+                parent->right = curr->right;
+        }
         else
-            parent->right = curr->right;
-
-        free(curr);
+            (tree->root = curr->right);
+        curr = NULL;
     }
     /*Node with right & left child*/
     else
     {
-        lab2_node *succ = (lab2_node *)curr->right;
+        par_succ = curr;
+        succ = (lab2_node *)curr->right;
         while (succ->left != NULL)
         {
-            parent = succ;
+            par_succ = succ;
             succ = (lab2_node *)succ->left;
         }
-        if (parent->left == succ)
+        if (par_succ->left == succ)
         {
-            parent->left = succ->right;
+            par_succ->left = par_succ->right;
         }
         else
-        {
-            parent->right = succ->right;
-        }
+            par_succ->right = succ->right;
         curr->key = succ->key;
-        free(succ);
+        succ = NULL;
     }
     return 1;
 }
-
 /* 
  * TODO
  *  Implement a function which remove nodes from the BST in fine-grained manner.
@@ -311,8 +319,10 @@ int lab2_node_remove_fg(lab2_tree *tree, int key)
         perror("Error: Empty tree node deletion!");
         exit(-1);
     }
-    lab2_node *parent = NULL;
     lab2_node *curr = tree->root;
+    lab2_node *parent = NULL;
+    lab2_node *succ;
+    lab2_node *par_succ;
     /*Searching for node to delete*/
     while (curr != NULL && curr->key != key)
     {
@@ -329,59 +339,71 @@ int lab2_node_remove_fg(lab2_tree *tree, int key)
     /*Node with no child (leaf node)*/
     if (curr->left == NULL && curr->right == NULL)
     {
-        pthread_mutex_lock(&parent->mutex);
-        if (parent->left == curr)
-            parent->left = NULL;
+        pthread_mutex_lock(&tree->mutex);
+        if (parent->left != NULL)
+        {
+            if (parent->left == curr)
+                parent->left = NULL;
+            else
+                parent->right = NULL;
+        }
         else
-            parent->right = NULL;
-        pthread_mutex_unlock(&parent->mutex);
-
-        free(curr);
+            tree->root = NULL;
+        pthread_mutex_unlock(&tree->mutex);
+        curr = NULL;
     }
     /*Node with left child only*/
     else if (curr->left != NULL && curr->right == NULL)
     {
-        pthread_mutex_lock(&parent->mutex);
-        if (parent->left == curr)
-            parent->left = curr->left;
+        pthread_mutex_lock(&tree->mutex);
+        if (parent != NULL)
+        {
+            if (parent->left == curr)
+                parent->left = curr->left;
+            else
+                parent->right = curr->left;
+        }
         else
-            parent->right = curr->left;
-        pthread_mutex_unlock(&parent->mutex);
-        free(curr);
+            (tree->root = curr->left);
+        pthread_mutex_unlock(&tree->mutex);
+        curr = NULL;
     }
     /*Node with right child only*/
     else if (curr->left == NULL && curr->right != NULL)
     {
-        pthread_mutex_lock(&parent->mutex);
-        if (parent->left == curr)
-            parent->left = curr->right;
+        pthread_mutex_lock(&tree->mutex);
+        if (parent != NULL)
+        {
+            if (parent->left == curr)
+                parent->left = curr->right;
+            else
+                parent->right = curr->right;
+        }
         else
-            parent->right = curr->right;
-
-        pthread_mutex_unlock(&parent->mutex);
-        free(curr);
+            (tree->root = curr->right);
+        pthread_mutex_unlock(&tree->mutex);
+        curr = NULL;
     }
     /*Node with right & left child*/
     else
     {
+        par_succ = curr;
+        succ = (lab2_node *)curr->right;
         pthread_mutex_lock(&tree->mutex);
-        lab2_node *succ = (lab2_node *)curr->right;
         while (succ->left != NULL)
         {
-            parent = succ;
+            par_succ = succ;
             succ = (lab2_node *)succ->left;
         }
-        if (parent->left == succ)
+        if (par_succ->left == succ)
         {
-            parent->left = succ->right;
+            par_succ->left = par_succ->right;
         }
         else
-        {
-            parent->right = succ->right;
-        }
-        curr->key = succ->key;
+            par_succ->right = succ->right;
         pthread_mutex_unlock(&tree->mutex);
-        free(succ);
+        curr->key = succ->key;
+        succ = NULL;
     }
     return 1;
 }
@@ -402,8 +424,10 @@ int lab2_node_remove_cg(lab2_tree *tree, int key)
         exit(-1);
     }
     pthread_mutex_lock(&tree->mutex);
-    lab2_node *parent = NULL;
     lab2_node *curr = tree->root;
+    lab2_node *parent = NULL;
+    lab2_node *succ;
+    lab2_node *par_succ;
     /*Searching for node to delete*/
     while (curr != NULL && curr->key != key)
     {
@@ -414,57 +438,74 @@ int lab2_node_remove_cg(lab2_tree *tree, int key)
             curr = (lab2_node *)curr->right;
     }
     if (curr == NULL)
+    {
+        pthread_mutex_unlock(&tree->mutex);
         return 0;
+    }
     /*Node with no child (leaf node)*/
     if (curr->left == NULL && curr->right == NULL)
     {
-        if (parent->left == curr)
-            parent->left = NULL;
+        if (parent->left != NULL)
+        {
+            if (parent->left == curr)
+                parent->left = NULL;
+            else
+                parent->right = NULL;
+        }
         else
-            parent->right = NULL;
-        free(curr);
+            tree->root = NULL;
+        curr = NULL;
     }
     /*Node with left child only*/
     else if (curr->left != NULL && curr->right == NULL)
     {
-        if (parent->left == curr)
-            parent->left = curr->left;
+        if (parent != NULL)
+        {
+            if (parent->left == curr)
+                parent->left = curr->left;
+            else
+                parent->right = curr->left;
+        }
         else
-            parent->right = curr->left;
-        free(curr);
+            (tree->root = curr->left);
+        curr = NULL;
     }
     /*Node with right child only*/
     else if (curr->left == NULL && curr->right != NULL)
     {
-        if (parent->left == curr)
-            parent->left = curr->right;
+        if (parent != NULL)
+        {
+            if (parent->left == curr)
+                parent->left = curr->right;
+            else
+                parent->right = curr->right;
+        }
         else
-            parent->right = curr->right;
-        free(curr);
+            (tree->root = curr->right);
+        curr = NULL;
     }
     /*Node with right & left child*/
     else
     {
-        lab2_node *succ = (lab2_node *)curr->right;
+        par_succ = curr;
+        succ = (lab2_node *)curr->right;
         while (succ->left != NULL)
         {
-            parent = succ;
+            par_succ = succ;
             succ = (lab2_node *)succ->left;
         }
-        if (parent->left == succ)
+        if (par_succ->left == succ)
         {
-            parent->left = succ->right;
+            par_succ->left = par_succ->right;
         }
         else
-        {
-            parent->right = succ->right;
-        }
+            par_succ->right = succ->right;
         curr->key = succ->key;
+        succ = NULL;
     }
     pthread_mutex_unlock(&tree->mutex);
     return 1;
 }
-
 /*
  * TODO
  *  Implement function which delete struct lab2_tree
@@ -480,7 +521,7 @@ void _lab2_tree_delete(lab2_node *node)
     _lab2_tree_delete((lab2_node *)node->left);
     _lab2_tree_delete((lab2_node *)node->right);
     //    printf("\n delete node %d", node->key);
-    free(node);
+    node = NULL;
 }
 
 void lab2_tree_delete(lab2_tree *tree)
@@ -492,5 +533,5 @@ void lab2_tree_delete(lab2_tree *tree)
     }
     _lab2_tree_delete(tree->root);
     tree->root = NULL;
-    free(tree);
+    tree = NULL;
 }
